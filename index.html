@@ -3,102 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eden Store | Enterprise POS</title>
+    <title>Vision Care | Enterprise POS + Bulk</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         :root { --primary: #0f172a; --accent: #3b82f6; --success: #10b981; --danger: #f43f5e; --bg: #f8fafc; --card: #ffffff; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); margin: 0; color: var(--primary); }
         .container { max-width: 1300px; margin: 0 auto; padding: 20px; }
-
-        /* Navigation */
         nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         .logo { font-size: 1.5rem; font-weight: 700; color: var(--primary); border-left: 5px solid var(--accent); padding-left: 15px; }
-
-        /* Dashboard Cards */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .card { background: var(--card); padding: 24px; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
-        .card h3 { margin: 0; font-size: 0.85rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
         .card .value { font-size: 1.75rem; font-weight: 700; margin-top: 10px; display: block; }
-        .card .trend { font-size: 0.8rem; margin-top: 5px; font-weight: 600; }
-
-        /* Layout Sections */
         .main-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
         .section-box { background: var(--card); border-radius: 16px; padding: 25px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
-        .section-box h2 { margin-top: 0; font-size: 1.1rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-
-        /* Tables */
         table { width: 100%; border-collapse: collapse; }
         th { text-align: left; padding: 15px; border-bottom: 2px solid #f1f5f9; color: #64748b; font-size: 0.75rem; font-weight: 700; }
         td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
-        tr:hover { background-color: #f8fafc; }
-
-        /* Buttons & Controls */
-        .btn { padding: 10px 20px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn { padding: 10px 20px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; }
         .btn-primary { background: var(--accent); color: white; }
-        .btn-success { background: var(--success); color: white; }
-        .btn-ghost { background: transparent; color: var(--danger); border: 1px solid #fee2e2; }
-        .btn:active { transform: scale(0.98); }
-
-        /* Search Bar */
-        .search-bar { width: 100%; padding: 12px 15px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 20px; font-size: 0.9rem; }
-
-        /* Modals */
+        .btn-bulk { background: #6366f1; color: white; margin-left: 10px; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 2000; }
-        .modal-content { background: white; padding: 40px; border-radius: 20px; width: 450px; max-width: 95%; position: relative; }
+        .modal-content { background: white; padding: 40px; border-radius: 20px; width: 450px; max-width: 95%; }
         .input-group { margin-bottom: 15px; }
         .input-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
-        .input-group input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-family: inherit; }
-
-        /* Badges */
+        .input-group input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; }
         .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
         .badge-low { background: #fff1f2; color: #e11d48; }
         .badge-ok { background: #ecfdf5; color: #059669; }
-
     </style>
 </head>
 <body>
 
 <div class="container">
     <nav>
-        <div class="logo">EDEN STORE</div>
-        <button class="btn btn-primary" onclick="openModal('stockModal')">+ Inventory Entry</button>
+        <div class="logo">Eden Store</div>
+        <div>
+            <button class="btn btn-primary" onclick="openModal('stockModal')">+ Single Entry</button>
+            <label for="csv-upload" class="btn btn-bulk">📂 Bulk Upload CSV</label>
+            <input type="file" id="csv-upload" accept=".csv" style="display:none" onchange="handleBulkUpload(event)">
+        </div>
     </nav>
 
     <div class="stats-grid">
-        <div class="card"><h3>Revenue</h3><span class="value" id="rev-val">0</span><div class="trend" style="color: var(--success)">Total Sales Income</div></div>
-        <div class="card"><h3>Net Profit</h3><span class="value" id="profit-val" style="color: var(--success)">0</span><div class="trend" id="margin-val">Margin: 0%</div></div>
-        <div class="card"><h3>Cost of Goods</h3><span class="value" id="cost-val" style="color: var(--danger)">0</span><div class="trend">Total Investment</div></div>
-        <div class="card"><h3>Total Units</h3><span class="value" id="qty-val">0</span><div class="trend">Active Stock</div></div>
+        <div class="card"><h3>Revenue</h3><span class="value" id="rev-val">0</span><div style="color:var(--success)">Income</div></div>
+        <div class="card"><h3>Net Profit</h3><span class="value" id="profit-val" style="color:var(--success)">0</span><div id="margin-val">Margin: 0%</div></div>
+        <div class="card"><h3>Total Units</h3><span class="value" id="qty-val">0</span><div>Stock Level</div></div>
     </div>
 
     <div class="main-grid">
         <div class="section-box">
-            <h2>📦 Live Inventory Control</h2>
-            <input type="text" class="search-bar" placeholder="Filter by brand or model..." id="stockSearch" onkeyup="filterStock()">
+            <h2>📦 Inventory Master List</h2>
+            <input type="text" style="width:100%; padding:10px; margin-bottom:20px; border-radius:8px; border:1px solid #ddd" placeholder="Search brands..." id="stockSearch" onkeyup="filterStock()">
             <table id="stockTable">
                 <thead>
-                    <tr>
-                        <th>Frame Detail</th>
-                        <th>Buy Price</th>
-                        <th>Sell Price</th>
-                        <th>Stock</th>
-                        <th>Actions</th>
-                    </tr>
+                    <tr><th>Frame Detail</th><th>Buy (Tsh)</th><th>Sell (Tsh)</th><th>Stock</th><th>Action</th></tr>
                 </thead>
                 <tbody id="inventory-body"></tbody>
             </table>
         </div>
 
         <div class="sidebar">
-            <div class="section-box" style="margin-bottom: 30px; border-top: 4px solid var(--danger);">
-                <h2 style="color: var(--danger)">⚠️ Restock Alerts</h2>
-                <div id="restock-list" style="font-size: 0.85rem; color: #64748b;">All stock levels healthy.</div>
-            </div>
-
             <div class="section-box">
-                <h2>🧾 Recent Activity</h2>
-                <div id="sales-feed" style="max-height: 400px; overflow-y: auto;">
-                    </div>
+                <h2>🧾 Sales History</h2>
+                <div id="sales-feed" style="max-height: 500px; overflow-y: auto;"></div>
             </div>
         </div>
     </div>
@@ -106,25 +74,25 @@
 
 <div id="stockModal" class="modal">
     <div class="modal-content">
-        <h2 style="margin-top:0">New Inventory Item</h2>
-        <div class="input-group"><label>Brand</label><input type="text" id="brand" placeholder="e.g. Ray-Ban"></div>
-        <div class="input-group"><label>Model</label><input type="text" id="model" placeholder="e.g. Aviator Classic"></div>
-        <div class="input-group"><label>Buying Price (Tsh)</label><input type="number" id="buy_p" placeholder="Cost to you"></div>
-        <div class="input-group"><label>Selling Price (Tsh)</label><input type="number" id="sell_p" placeholder="Price to customer"></div>
-        <div class="input-group"><label>Initial Quantity</label><input type="number" id="qty" placeholder="Units"></div>
-        <button class="btn btn-primary" style="width:100%" onclick="saveStock()">Add to Database</button>
-        <button onclick="closeModal('stockModal')" style="width:100%; background:none; border:none; margin-top:15px; cursor:pointer">Cancel</button>
+        <h2>New Item Entry</h2>
+        <div class="input-group"><label>Brand</label><input type="text" id="brand"></div>
+        <div class="input-group"><label>Model</label><input type="text" id="model"></div>
+        <div class="input-group"><label>Buying Price</label><input type="number" id="buy_p"></div>
+        <div class="input-group"><label>Selling Price</label><input type="number" id="sell_p"></div>
+        <div class="input-group"><label>Quantity</label><input type="number" id="qty"></div>
+        <button class="btn btn-primary" style="width:100%" onclick="saveStock()">Add Item</button>
+        <button onclick="closeModal('stockModal')" style="width:100%; background:none; border:none; margin-top:10px; cursor:pointer">Cancel</button>
     </div>
 </div>
 
 <div id="sellModal" class="modal">
     <div class="modal-content">
-        <h2 style="margin-top:0">Finalize Sale</h2>
-        <p id="item-info" style="font-weight: 600; color: var(--accent)"></p>
+        <h2>Finalize Sale</h2>
+        <p id="item-info" style="font-weight:700; color:var(--accent)"></p>
         <div class="input-group"><label>Customer Name</label><input type="text" id="c_name"></div>
         <div class="input-group"><label>Phone Number</label><input type="text" id="c_phone"></div>
-        <button class="btn btn-success" style="width:100%" onclick="executeSale()">Confirm Transaction</button>
-        <button onclick="closeModal('sellModal')" style="width:100%; background:none; border:none; margin-top:15px; cursor:pointer">Cancel</button>
+        <button class="btn btn-primary" style="width:100%; background:var(--success)" onclick="executeSale()">Confirm Sale</button>
+        <button onclick="closeModal('sellModal')" style="width:100%; background:none; border:none; margin-top:10px; cursor:pointer">Cancel</button>
     </div>
 </div>
 
@@ -149,111 +117,114 @@
 
     let activeItem = null;
 
-    // --- Inventory & Restock Logic ---
     onValue(invRef, (snap) => {
         const data = snap.val();
         const body = document.getElementById('inventory-body');
-        const alertList = document.getElementById('restock-list');
-        let totalQty = 0, alerts = "";
-        body.innerHTML = "";
-
+        let totalQty = 0; body.innerHTML = "";
         if(data) {
             Object.keys(data).forEach(key => {
                 const item = data[key];
                 totalQty += item.qty;
-                if(item.qty <= 3) alerts += `<div style="margin-bottom:8px">❌ <b>${item.brand}</b>: Only ${item.qty} left</div>`;
-                
-                body.innerHTML += `
-                    <tr>
-                        <td><b>${item.brand}</b><br><small style="color:#64748b">${item.model}</small></td>
-                        <td>${Number(item.buy_p).toLocaleString()}</td>
-                        <td>${Number(item.sell_p).toLocaleString()}</td>
-                        <td><span class="badge ${item.qty <= 3 ? 'badge-low' : 'badge-ok'}">${item.qty} Pcs</span></td>
-                        <td>
-                            <button class="btn-success" style="padding:5px 10px; border-radius:6px; border:none; cursor:pointer" onclick="openSale('${key}', '${item.brand}', '${item.model}', ${item.qty}, ${item.buy_p}, ${item.sell_p})">Sell</button>
-                            <button class="btn-ghost" style="padding:5px 10px; border-radius:6px; cursor:pointer" onclick="deleteItem('${key}')">Remove</button>
-                        </td>
-                    </tr>`;
+                body.innerHTML += `<tr>
+                    <td><b>${item.brand}</b><br><small>${item.model}</small></td>
+                    <td>${Number(item.buy_p).toLocaleString()}</td>
+                    <td>${Number(item.sell_p).toLocaleString()}</td>
+                    <td><span class="badge ${item.qty <= 3 ? 'badge-low' : 'badge-ok'}">${item.qty} Pcs</span></td>
+                    <td>
+                        <button class="btn" style="background:var(--success); color:white; padding:5px" onclick="openSale('${key}', '${item.brand}', '${item.model}', ${item.qty}, ${item.buy_p}, ${item.sell_p})">Sell</button>
+                        <button class="btn" style="background:var(--danger); color:white; padding:5px" onclick="deleteItem('${key}')">Del</button>
+                    </td>
+                </tr>`;
             });
         }
         document.getElementById('qty-val').innerText = totalQty;
-        alertList.innerHTML = alerts || "✅ All stock levels healthy.";
     });
 
-    // --- Sales & Dashboard Logic ---
     onValue(salesRef, (snap) => {
         const data = snap.val();
         const feed = document.getElementById('sales-feed');
-        let rev = 0, cost = 0, profit = 0;
-        feed.innerHTML = "";
-
+        let rev = 0, profit = 0; feed.innerHTML = "";
         if(data) {
             Object.keys(data).reverse().forEach(key => {
                 const s = data[key];
                 rev += Number(s.sell_p);
-                cost += Number(s.buy_p);
-                const p = s.sell_p - s.buy_p;
-                profit += p;
-
-                feed.innerHTML += `
-                    <div style="padding:15px; border-bottom:1px solid #f1f5f9; position:relative">
-                        <div style="font-size:0.7rem; color:#94a3b8">${new Date(s.time).toLocaleTimeString()}</div>
-                        <div style="font-weight:700; font-size:0.9rem">${s.brand}</div>
-                        <div style="font-size:0.8rem; color:#64748b">${s.client}</div>
-                        <div style="position:absolute; right:15px; top:25px; font-weight:700; color:var(--success)">+${p.toLocaleString()}</div>
-                    </div>`;
+                profit += (s.sell_p - s.buy_p);
+                feed.innerHTML += `<div style="padding:10px; border-bottom:1px solid #eee">
+                    <small>${new Date(s.time).toLocaleTimeString()}</small><br>
+                    <b>${s.brand}</b> sold to <b>${s.client}</b>
+                </div>`;
             });
         }
         document.getElementById('rev-val').innerText = rev.toLocaleString() + " Tsh";
-        document.getElementById('cost-val').innerText = cost.toLocaleString() + " Tsh";
         document.getElementById('profit-val').innerText = profit.toLocaleString() + " Tsh";
-        const margin = rev > 0 ? ((profit / rev) * 100).toFixed(1) : 0;
-        document.getElementById('margin-val').innerText = `Margin: ${margin}%`;
+        document.getElementById('margin-val').innerText = `Margin: ${rev > 0 ? ((profit/rev)*100).toFixed(1) : 0}%`;
     });
 
-    // --- Global Window Functions ---
+    // BULK UPLOAD LOGIC
+    window.handleBulkUpload = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        Papa.parse(file, {
+            header: true,
+            dynamicTyping: true,
+            complete: function(results) {
+                const data = results.data;
+                let count = 0;
+                data.forEach(row => {
+                    // Only upload if essential data exists
+                    if (row.brand && row.qty) {
+                        push(invRef, {
+                            brand: row.brand,
+                            model: row.model || "N/A",
+                            buy_p: parseFloat(row.buy_p) || 0,
+                            sell_p: parseFloat(row.sell_p) || 0,
+                            qty: parseInt(row.qty) || 0
+                        });
+                        count++;
+                    }
+                });
+                alert(`Successfully uploaded ${count} frames to the cloud!`);
+                event.target.value = ''; // Reset input
+            }
+        });
+    };
+
     window.saveStock = () => {
-        const item = {
+        push(invRef, {
             brand: document.getElementById('brand').value,
             model: document.getElementById('model').value,
             buy_p: parseFloat(document.getElementById('buy_p').value),
             sell_p: parseFloat(document.getElementById('sell_p').value),
             qty: parseInt(document.getElementById('qty').value)
-        };
-        if(!item.brand || !item.qty) return alert("Fill all fields!");
-        push(invRef, item);
+        });
         closeModal('stockModal');
     };
 
     window.openSale = (key, brand, model, qty, buy, sell) => {
         activeItem = { key, brand, model, qty, buy, sell };
-        document.getElementById('item-info').innerText = `${brand} - ${model}`;
+        document.getElementById('item-info').innerText = brand + " (" + model + ")";
         openModal('sellModal');
     };
 
     window.executeSale = () => {
         const client = document.getElementById('c_name').value;
         const phone = document.getElementById('c_phone').value;
-        if(!client) return alert("Client name required!");
+        if(!client) return alert("Client name needed!");
 
         update(ref(db, `inventory/${activeItem.key}`), { qty: activeItem.qty - 1 });
-        push(salesRef, {
-            client, phone, brand: activeItem.brand,
-            buy_p: activeItem.buy, sell_p: activeItem.sell, time: Date.now()
-        });
+        push(salesRef, { client, phone, brand: activeItem.brand, buy_p: activeItem.buy, sell_p: activeItem.sell, time: Date.now() });
         closeModal('sellModal');
-        document.getElementById('c_name').value = ''; document.getElementById('c_phone').value = '';
     };
 
+    window.deleteItem = (k) => confirm("Delete permanently?") && remove(ref(db, `inventory/${k}`));
+    window.openModal = (id) => document.getElementById(id).style.display = "flex";
+    window.closeModal = (id) => document.getElementById(id).style.display = "none";
     window.filterStock = () => {
         const q = document.getElementById('stockSearch').value.toLowerCase();
         const rows = document.querySelectorAll('#inventory-body tr');
         rows.forEach(r => r.style.display = r.innerText.toLowerCase().includes(q) ? "" : "none");
     };
-
-    window.deleteItem = (k) => confirm("Permanent delete?") && remove(ref(db, `inventory/${k}`));
-    window.openModal = (id) => document.getElementById(id).style.display = "flex";
-    window.closeModal = (id) => document.getElementById(id).style.display = "none";
 </script>
 </body>
 </html>
